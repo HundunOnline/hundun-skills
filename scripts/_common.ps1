@@ -24,7 +24,7 @@ api_key=
 base_url=$script:DefaultBaseUrl
 "@ | Set-Content -Path $script:ConfigPath -Encoding UTF8
         Write-Host "Config created: $script:ConfigPath" -ForegroundColor Yellow
-        Write-Host "Send api_key (hdxy_sk_...) to AI to configure. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Yellow
+        Write-Host "Send api_key (hd_sk_...) to AI to configure. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Yellow
         return $false
     }
     $lines = Get-Content $script:ConfigPath -ErrorAction SilentlyContinue
@@ -80,7 +80,7 @@ function Invoke-ApiGetNoAuth([string]$path) {
 
 function Invoke-ApiGet([string]$path) {
     if (-not $script:ApiKey) {
-        Write-Host "Error: api_key not configured. Send api_key (hdxy_sk_...) to AI. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Red
+        Write-Host "Error: api_key not configured. Send api_key (hd_sk_...) to AI. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Red
         return $null
     }
     $url = "$script:BaseUrl$path"

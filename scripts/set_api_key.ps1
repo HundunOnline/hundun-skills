@@ -1,7 +1,7 @@
 # write api_key to local config
 param([Parameter(Mandatory=$true, Position=0)][string]$ApiKey)
-if ($ApiKey -notmatch '^hdxy_sk_') {
-    Write-Host "Usage: api_key must start with hdxy_sk_" -ForegroundColor Red
+if ($ApiKey -notmatch '^hd_sk_') {
+    Write-Host "Usage: api_key must start with hd_sk_" -ForegroundColor Red
     exit 1
 }
 $configPath = if ($env:HDXY_CONFIG) { $env:HDXY_CONFIG } else { Join-Path $env:USERPROFILE ".hdxy_config" }

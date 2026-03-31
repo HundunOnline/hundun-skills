@@ -24,7 +24,7 @@ load_config() {
         } > "$CONFIG_FILE"
         chmod 600 "$CONFIG_FILE" 2>/dev/null || true
         echo "已自动创建配置文件：$CONFIG_FILE" >&2
-        echo "请把 api_key（hdxy_sk_ 开头）直接发给 AI 即可配置，无需手动操作。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
+        echo "请把 api_key（hd_sk_ 开头）直接发给 AI 即可配置，无需手动操作。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
         return 1
     fi
     api_key=$(grep '^api_key=' "$CONFIG_FILE" 2>/dev/null | cut -d= -f2- | tr -d '\r' | head -1)
@@ -68,7 +68,7 @@ api_get() {
     local path="$1"
     local url="${base_url}${path}"
     if [[ -z "$api_key" ]]; then
-        echo "错误：未配置 api_key。请把 api_key（hdxy_sk_ 开头）直接发给 AI 即可配置。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
+        echo "错误：未配置 api_key。请把 api_key（hd_sk_ 开头）直接发给 AI 即可配置。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
         return 1
     fi
     curl -sS -w "\n%{http_code}" -H "X-API-Key: $api_key" "$url"
@@ -99,7 +99,7 @@ api_post() {
     local body="$2"
     local url="${base_url}${path}"
     if [[ -z "$api_key" ]]; then
-        echo "错误：未配置 api_key。请把 api_key（hdxy_sk_ 开头）直接发给 AI 即可配置。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
+        echo "错误：未配置 api_key。请把 api_key（hd_sk_ 开头）直接发给 AI 即可配置。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
         return 1
     fi
     local origin
