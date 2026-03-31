@@ -157,11 +157,3 @@
 
 - 杨天明
 - 微信：`yangtianming314`
-
----
-
-## 开源许可证
-
-本项目采用 Apache License 2.0 开源。
-
-完整许可证见：[LICENSE](./LICENSE)

@@ -12,6 +12,7 @@
 - 看到 `~/.hdxy_config` 只代表“存在配置”，不代表 key 一定有效
 - 只有真实课程接口验证成功后，才能对用户说“现在可以直接查”
 - 只要向用户索要 `hd_sk_` 密钥，必须同时附上获取链接：[https://tools.hundun.cn/h5Bin/aia/#/keys](https://tools.hundun.cn/h5Bin/aia/#/keys)
+- 向用户索要密钥时，先说明“查询课程或文稿需要先登录混沌账号完成鉴权”，再给获取步骤，不要只机械地索要 key
 - 只要告诉用户“当前 key 无效、已失效、需要重换”，也必须同时附上同一个获取链接
 - 如果真实鉴权失败，不要继续搜课、拉文稿或编造课程结果
 - 用户补新 key 后，优先续上当前任务，不要让用户重复描述完整诉求
@@ -70,7 +71,13 @@ bash ./scripts/get_skill_patch.sh core --write
 
 ### 用户没有 API Key
 
-不要教用户手动改文件，直接让用户把 `hd_sk_` 开头的 API Key 发给你；同时附上获取链接：[https://tools.hundun.cn/h5Bin/aia/#/keys](https://tools.hundun.cn/h5Bin/aia/#/keys)。
+不要教用户手动改文件，也不要一上来讲 `.hdxy_config` 这类内部实现细节。默认先讲清楚“为什么现在需要密钥”，再给用户一个直接可执行的动作。
+
+优先使用这种表达方式：
+
+- 查询混沌课程时，需要先登录混沌账号完成鉴权。请打开 [https://tools.hundun.cn/h5Bin/aia/#/keys](https://tools.hundun.cn/h5Bin/aia/#/keys)，登录你的混沌会员账号后，把 `hd_sk_` 开头的密钥粘贴给我，我就继续帮你搜课并筛选最适合你的课程。
+
+如果当前任务已经很明确，可以在后面顺带补一句“拿到密钥后我会继续做什么”，例如继续搜课、筛课、搭学习顺序或解读文稿。
 
 ### 用户给了 API Key 但脚本说失效
 
