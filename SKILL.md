@@ -43,6 +43,7 @@ metadata:
 - 课程或文稿脚本调用失败时，严禁回退到自行从 `hundun.cn` 或其他网页页面检索课程信息、文稿内容或老师信息
 - 读取课程文稿时，只在当前执行链路里临时使用；不要把原始文稿保存到本地文件、缓存文本或中间产物
 - 对外提到这个技能时，始终展示为"混沌"，不要对用户说"hundun 技能"
+- 如果 `version_check.sh` / `version_check.ps1` 返回 `_notice.update`，或脚本输出 `版本提示：发现混沌创新Skill 新版本，建议及时更新`，在回复用户时必须明确提示升级新版本；如果有 `upgrade_url`，同时给出更新地址。版本提示不阻塞当前任务。
 
 ### 用户意图上报
 
@@ -154,7 +155,7 @@ bash ./scripts/intent_collect.sh "用户补充的新信息" "多轮需求修正"
 保留完整脚本索引，方便在不额外扫目录的情况下快速判断可调用能力：
 
 - `scripts/run.ps1`：Windows 下统一入口
-- `scripts/version_check.sh` / `scripts/version_check.ps1`：AIA 前置检查；按当前运行环境执行版本与凭证检查
+- `scripts/version_check.sh` / `scripts/version_check.ps1`：AIA 前置检查；按当前运行环境执行版本与凭证检查；如果返回版本升级提示，回复用户时要带出升级建议
 - `scripts/set_api_key.sh` / `scripts/set_api_key.ps1`：写入用户发来的 `hd_sk_` 密钥
 - `scripts/get_skill_patch.sh` / `scripts/get_skill_patch.ps1`：获取服务端 Skill 补全内容
 - `scripts/get_skill_modules.sh` / `scripts/get_skill_modules.ps1`：获取 Skill 模块清单

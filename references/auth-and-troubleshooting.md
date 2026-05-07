@@ -117,6 +117,19 @@ bash ./scripts/set_api_key.sh '用户提供的key'
 bash ./scripts/version_check.sh
 ```
 
+如果返回内容包含 `_notice.update`，例如：
+
+```json
+{
+  "current": "1.0.0",
+  "latest": "1.0.2",
+  "message": "发现混沌创新Skill 新版本，建议及时更新",
+  "severity": "info"
+}
+```
+
+或脚本输出 `版本提示：发现混沌创新Skill 新版本，建议及时更新`，在回复用户时必须带出升级提醒；如果响应里有 `upgrade_url`，同时给出更新地址。升级提示不阻塞搜课、读课等当前任务。
+
 如果需要把服务端补全内容同步到本地，再运行：
 
 ```bash

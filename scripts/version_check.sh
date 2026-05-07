@@ -8,6 +8,41 @@ print_login_guidance() {
     echo "当前凭证可能已失效、无权限或未完成登录。请打开 https://tools.hundun.cn/h5Bin/aia/#/keys 登录混沌会员账号后，重新生成一个 hd_sk_ 开头的密钥发给 AI。拿到有效密钥后，我会继续当前任务。" >&2
 }
 
+print_upgrade_notice() {
+    local body="$1"
+    if ! printf '%s' "$body" | grep -q '"_notice"'; then
+        return 0
+    fi
+    local message current latest upgrade_url severity
+    if command -v jq &>/dev/null; then
+        message=$(printf '%s' "$body" | jq -r '._notice.update.message // empty' 2>/dev/null)
+        current=$(printf '%s' "$body" | jq -r '._notice.update.current // empty' 2>/dev/null)
+        latest=$(printf '%s' "$body" | jq -r '._notice.update.latest // empty' 2>/dev/null)
+        upgrade_url=$(printf '%s' "$body" | jq -r '._notice.update.upgrade_url // empty' 2>/dev/null)
+        severity=$(printf '%s' "$body" | jq -r '._notice.update.severity // empty' 2>/dev/null)
+    elif command -v python3 &>/dev/null || command -v python &>/dev/null; then
+        local py parsed
+        py=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+        parsed=$(printf '%s' "$body" | "$py" -c 'import json,sys
+try:
+    u=json.load(sys.stdin).get("_notice",{}).get("update",{})
+except Exception:
+    u={}
+print("\n".join([u.get("message",""),u.get("current",""),u.get("latest",""),u.get("upgrade_url",""),u.get("severity","")]))' 2>/dev/null)
+        message=$(printf '%s\n' "$parsed" | sed -n '1p')
+        current=$(printf '%s\n' "$parsed" | sed -n '2p')
+        latest=$(printf '%s\n' "$parsed" | sed -n '3p')
+        upgrade_url=$(printf '%s\n' "$parsed" | sed -n '4p')
+        severity=$(printf '%s\n' "$parsed" | sed -n '5p')
+    fi
+    [[ -z "$message" || -z "$latest" ]] && return 0
+    printf '版本提示：%s' "$message" >&2
+    [[ -n "$current" ]] && printf '（当前 %s，最新 %s）' "$current" "$latest" >&2
+    [[ -n "$upgrade_url" ]] && printf '。更新地址：%s' "$upgrade_url" >&2
+    [[ -n "$severity" ]] && printf '。级别：%s' "$severity" >&2
+    printf '\n' >&2
+}
+
 load_config || exit 1
 
 if [[ -z "$api_key" ]]; then
@@ -21,6 +56,7 @@ status=$?
 
 if [[ $status -eq 0 ]]; then
     printf '%s\n' "$output"
+    print_upgrade_notice "$output"
     exit 0
 fi
 
