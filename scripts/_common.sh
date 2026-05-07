@@ -89,6 +89,16 @@ urlencode() {
     fi
 }
 
+auth_guidance() {
+    echo "当前凭证可能已失效、无权限或未完成登录。请打开 https://tools.hundun.cn/h5Bin/aia/#/keys 登录混沌会员账号后，重新生成一个 hd_sk_ 开头的密钥发给 AI。拿到有效密钥后，我会继续当前任务。" >&2
+}
+
+is_auth_error() {
+    local err_no="${1:-}" err_msg="${2:-}" body="${3:-}" http_code="${4:-}"
+    [[ "$err_no" == "-2004" || "$err_no" == "-2005" ]] && return 0
+    printf '%s %s %s' "$http_code" "$err_msg" "$body" | grep -Eqi 'api[_ -]?key|密钥|鉴权|权限|401|403|unauthorized|forbidden|失效|未登录|未携带'
+}
+
 intent_extra_json() {
     local route="${1:-${HUNDUN_INTENT_ROUTE:-}}"
     local stage="${2:-${HUNDUN_INTENT_STAGE:-}}"
@@ -155,7 +165,8 @@ api_get() {
     path=$(with_client_version "$path")
     local url="${base_url}${path}"
     if [[ -z "$api_key" ]]; then
-        echo "错误：未配置 api_key。请设置环境变量 HUNDUN_API_KEY，或通过 scripts/set_api_key.sh 写入当前工作区 ./.clawhub/.hdxy_config。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
+        echo "错误：未配置 api_key。请设置环境变量 HUNDUN_API_KEY，或通过 scripts/set_api_key.sh 写入当前工作区 ./.clawhub/.hdxy_config。" >&2
+        auth_guidance
         return 1
     fi
     local headers=()
@@ -217,7 +228,8 @@ api_post() {
     local body="$2"
     local url="${base_url}${path}"
     if [[ -z "$api_key" ]]; then
-        echo "错误：未配置 api_key。请设置环境变量 HUNDUN_API_KEY，或通过 scripts/set_api_key.sh 写入当前工作区 ./.clawhub/.hdxy_config。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
+        echo "错误：未配置 api_key。请设置环境变量 HUNDUN_API_KEY，或通过 scripts/set_api_key.sh 写入当前工作区 ./.clawhub/.hdxy_config。" >&2
+        auth_guidance
         return 1
     fi
     local headers=()
@@ -235,11 +247,13 @@ api_post() {
 parse_response() {
     local raw="$1"
     local body http_code
+    [[ -z "$raw" ]] && return 1
     body=$(printf '%s\n' "$raw" | sed '$d')
     http_code=$(printf '%s\n' "$raw" | tail -n 1)
     if [[ "$http_code" != "200" ]]; then
         echo "HTTP $http_code" >&2
         echo "$body" | head -c 500 >&2
+        is_auth_error "" "" "$body" "$http_code" && auth_guidance
         return 1
     fi
     local err_no err_msg
@@ -248,6 +262,7 @@ parse_response() {
     err_msg="${err_msg:-未知错误}"
     if [[ -n "$err_no" ]] && [[ "$err_no" != "0" ]]; then
         echo "$err_msg" >&2
+        is_auth_error "$err_no" "$err_msg" "$body" "$http_code" && auth_guidance
         return 1
     fi
     # 解压：compressed=true 时，data 为 base64(zstd(实际JSON))

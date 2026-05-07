@@ -68,6 +68,16 @@ function Get-UrlEncode([string]$s) {
     [System.Uri]::EscapeDataString($s)
 }
 
+function Write-AuthGuidance {
+    Write-Host "当前凭证可能已失效、无权限或未完成登录。请打开 https://tools.hundun.cn/h5Bin/aia/#/keys 登录混沌会员账号后，重新生成一个 hd_sk_ 开头的密钥发给 AI。拿到有效密钥后，我会继续当前任务。" -ForegroundColor Yellow
+}
+
+function Test-AuthError([string]$errNo, [string]$errMsg, [string]$body, [string]$httpCode) {
+    if ($errNo -eq "-2004" -or $errNo -eq "-2005") { return $true }
+    $hint = "$httpCode $errMsg $body"
+    return ($hint -match 'api[_ -]?key|密钥|鉴权|权限|401|403|unauthorized|forbidden|失效|未登录|未携带')
+}
+
 # PS 5.x: use DownloadData + UTF-8 decode (more reliable than DownloadString for JSON with CJK).
 function Read-WebClientUtf8([string]$url, [hashtable]$extraHeaders) {
     $wc = New-Object System.Net.WebClient
@@ -119,7 +129,8 @@ function Invoke-ApiGetNoAuth([string]$path) {
 
 function Invoke-ApiGet([string]$path) {
     if (-not $script:ApiKey) {
-        Write-Host "Error: api_key not configured. Send api_key (hd_sk_...) to AI. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Red
+        Write-Host "Error: api_key not configured. Send api_key (hd_sk_...) to AI." -ForegroundColor Red
+        Write-AuthGuidance
         return $null
     }
     $path = Add-ClientVersion $path
@@ -145,6 +156,7 @@ function Invoke-ApiGetQuery([string]$path, [string]$key, [string]$value) {
 function Invoke-ApiPost([string]$path, [string]$body) {
     if (-not $script:ApiKey) {
         Write-Host "Error: api_key not configured." -ForegroundColor Red
+        Write-AuthGuidance
         return $null
     }
     $url = "$script:BaseUrl$path"
@@ -239,18 +251,23 @@ function Invoke-CollectSkillIntent(
 }
 
 function Parse-Response([string]$raw) {
+    if (-not $raw) {
+        exit 1
+    }
     $lines = $raw -split "`n"
     $httpCode = $lines[-1]
     $body = ($lines[0..($lines.Count-2)] -join "`n")
     if ($httpCode -ne "200") {
         Write-Host "HTTP $httpCode" -ForegroundColor Red
         Write-Host $body.Substring(0, [Math]::Min(500, $body.Length)) -ForegroundColor Red
+        if (Test-AuthError "" "" $body $httpCode) { Write-AuthGuidance }
         exit 1
     }
     $errNo = if ($body -match '"error_no"\s*:\s*(-?\d+)') { $matches[1] } else { $null }
     $errMsg = if ($body -match '"error_msg"\s*:\s*"([^"]*)"') { $matches[1] } else { "Unknown error" }
     if ($errNo -and $errNo -ne "0") {
         Write-Host $errMsg -ForegroundColor Red
+        if (Test-AuthError $errNo $errMsg $body $httpCode) { Write-AuthGuidance }
         exit 1
     }
     if ($body -match '"compressed"\s*:\s*true') {

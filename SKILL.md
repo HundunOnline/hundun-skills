@@ -155,7 +155,7 @@ bash ./scripts/intent_collect.sh "用户补充的新信息" "多轮需求修正"
 保留完整脚本索引，方便在不额外扫目录的情况下快速判断可调用能力：
 
 - `scripts/run.ps1`：Windows 下统一入口
-- `scripts/version_check.sh` / `scripts/version_check.ps1`：AIA 前置检查；按当前运行环境执行版本与凭证检查；如果返回版本升级提示，回复用户时要带出升级建议
+- `scripts/version_check.sh` / `scripts/version_check.ps1`：AIA 版本前置检查；不依赖密钥；如果返回版本升级提示，回复用户时要带出升级建议
 - `scripts/set_api_key.sh` / `scripts/set_api_key.ps1`：写入用户发来的 `hd_sk_` 密钥
 - `scripts/get_skill_patch.sh` / `scripts/get_skill_patch.ps1`：获取服务端 Skill 补全内容
 - `scripts/get_skill_modules.sh` / `scripts/get_skill_modules.ps1`：获取 Skill 模块清单

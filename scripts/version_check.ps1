@@ -5,7 +5,7 @@ if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")
 
 function Write-LoginGuidance {
-    Write-Host "当前凭证可能已失效、无权限或未完成登录。请打开 https://tools.hundun.cn/h5Bin/aia/#/keys 登录混沌会员账号后，重新生成一个 hd_sk_ 开头的密钥发给 AI。拿到有效密钥后，我会继续当前任务。" -ForegroundColor Yellow
+    Write-AuthGuidance
 }
 
 function Write-UpgradeNotice([string]$body) {
