@@ -8,8 +8,10 @@ $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyComman
 . (Join-Path $scriptDir "_common.ps1")
 if (-not (Load-Config)) { exit 1 }
 $ts = [int][DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-$requestId = "hundun-skill-conversation-$Source-$ts"
-$sessionId = "hundun-skill-session-$Source-$ts"
+$sourceId = ($Source -replace '[^A-Za-z0-9_.:-]', '')
+if (-not $sourceId) { $sourceId = "source" }
+$requestId = "hundun-skill-conversation-$sourceId-$ts"
+$sessionId = "hundun-skill-session-$sourceId-$ts"
 $body = @{
     client_id = "hundun-skill"
     request_id = $requestId

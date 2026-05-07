@@ -14,8 +14,10 @@ fi
 
 load_config || exit 1
 ts=$(date +%s)
-request_id="hundun-skill-conversation-${source_value}-${ts}"
-session_id="hundun-skill-session-${source_value}-${ts}"
+source_id=$(printf '%s' "$source_value" | tr -cd 'A-Za-z0-9_.:-')
+source_id="${source_id:-source}"
+request_id="hundun-skill-conversation-${source_id}-${ts}"
+session_id="hundun-skill-session-${source_id}-${ts}"
 
 if command -v jq &>/dev/null; then
     body=$(jq -n \
