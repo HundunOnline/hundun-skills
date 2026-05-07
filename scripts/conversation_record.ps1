@@ -17,6 +17,7 @@ $body = @{
     scene_value = $Source
     user_input = $Question
     ai_final_answer = $Answer
+    client_version = $script:SkillVersion
     timestamp = $ts
 } | ConvertTo-Json -Depth 5 -Compress
 $raw = Invoke-ApiPost "/aia/api/v1/conversation/records" $body

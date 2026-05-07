@@ -111,6 +111,7 @@ function Get-CommonHeaders {
 }
 
 function Invoke-ApiGetNoAuth([string]$path) {
+    $path = Add-ClientVersion $path
     $url = "$script:BaseUrl$path"
     $result = Read-WebClientUtf8 $url (Get-CommonHeaders)
     return "$($result.Body)`n$($result.StatusCode)"
@@ -121,11 +122,19 @@ function Invoke-ApiGet([string]$path) {
         Write-Host "Error: api_key not configured. Send api_key (hd_sk_...) to AI. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Red
         return $null
     }
+    $path = Add-ClientVersion $path
     $url = "$script:BaseUrl$path"
     $headers = Get-CommonHeaders
     $headers["X-API-Key"] = $script:ApiKey
     $result = Read-WebClientUtf8 $url $headers
     return "$($result.Body)`n$($result.StatusCode)"
+}
+
+function Add-ClientVersion([string]$path) {
+    if (-not $path) { return $path }
+    if ($path -match '(^|[?&])client_version=') { return $path }
+    $sep = if ($path.Contains("?")) { "&" } else { "?" }
+    return "$path${sep}client_version=$([System.Uri]::EscapeDataString($script:SkillVersion))"
 }
 
 function Invoke-ApiGetQuery([string]$path, [string]$key, [string]$value) {

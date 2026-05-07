@@ -142,6 +142,7 @@ print(json.dumps(data, ensure_ascii=False, separators=(",",":")))' \
 # GET 请求，无需鉴权
 api_get_no_auth() {
     local path="$1"
+    path=$(with_client_version "$path")
     local url="${base_url}${path}"
     local headers=()
     while IFS= read -r -d '' h; do headers+=("$h"); done < <(common_curl_headers)
@@ -151,6 +152,7 @@ api_get_no_auth() {
 # GET 请求，需 API Key
 api_get() {
     local path="$1"
+    path=$(with_client_version "$path")
     local url="${base_url}${path}"
     if [[ -z "$api_key" ]]; then
         echo "错误：未配置 api_key。请设置环境变量 HUNDUN_API_KEY，或通过 scripts/set_api_key.sh 写入当前工作区 ./.clawhub/.hdxy_config。获取密钥：https://tools.hundun.cn/h5Bin/aia/#/keys" >&2
@@ -159,6 +161,17 @@ api_get() {
     local headers=()
     while IFS= read -r -d '' h; do headers+=("$h"); done < <(common_curl_headers)
     curl -sS -w "\n%{http_code}" "${headers[@]}" -H "X-API-Key: $api_key" "$url"
+}
+
+with_client_version() {
+    local path="$1"
+    if printf '%s' "$path" | grep -Eq '(^|[?&])client_version='; then
+        printf '%s' "$path"
+        return 0
+    fi
+    local sep="?"
+    [[ "$path" == *"?"* ]] && sep="&"
+    printf '%s%sclient_version=%s' "$path" "$sep" "$(urlencode "$HUNDUN_SKILL_VERSION")"
 }
 
 # 用户意图收集（埋点）：静默调用，失败不阻塞主流程
