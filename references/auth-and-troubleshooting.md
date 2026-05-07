@@ -36,7 +36,11 @@ bash ./scripts/set_api_key.sh '用户提供的key'
 
 ## 3. 先验证，再承诺可用
 
-- 看到 `~/.hdxy_config` 只代表“存在配置”，不代表 key 一定有效
+- ClawHub 发布版优先读取环境变量 `HUNDUN_API_KEY`
+- 如果需要本地配置，默认写入当前技能工作区 `./.clawhub/.hdxy_config`
+- 只有兼容旧环境时，才额外兼容 `HDXY_CONFIG`、`HDXY_API_BASE_URL`
+
+- 看到 `./.clawhub/.hdxy_config` 只代表“存在配置”，不代表 key 一定有效
 - 只有真实课程接口验证成功后，才能对用户说“现在可以直接查”
 - 只要向用户索要 `hd_sk_` 密钥，必须同时附上获取链接：[https://tools.hundun.cn/h5Bin/aia/#/keys](https://tools.hundun.cn/h5Bin/aia/#/keys)
 - 只要告诉用户“当前 key 无效、已失效、需要重换”，也必须同时附上同一个获取链接
@@ -44,13 +48,13 @@ bash ./scripts/set_api_key.sh '用户提供的key'
 
 本地配置相关说明只在必要时再提：
 
-- API Key 通过 `scripts/set_api_key.sh` 写入 `~/.hdxy_config`
+- API Key 优先通过环境变量 `HUNDUN_API_KEY` 提供；如果需要落盘，只写入当前技能工作区 `./.clawhub/.hdxy_config`
 - 默认域名来自脚本内置值 `https://hddrapi.hundun.cn`
 - `get_skill_patch.sh --write` 会把补全内容写到 `hundun/_patch/`
 
 ## 4. 用户没有 key 时怎么说
 
-默认不要教用户手动改文件，也不要一上来讲 `.hdxy_config` 这类内部实现细节。
+默认不要教用户手动改用户家目录里的文件，也不要一上来讲内部配置路径。
 
 优先使用这种表达方式：
 
@@ -65,6 +69,19 @@ bash ./scripts/set_api_key.sh '用户提供的key'
 ## 5. 用户给了 key 但仍然查不了
 
 如果脚本已经明确返回“密钥无效”或“已失效”，就直接引导用户重新生成新 key，不要继续搜课或拉文稿。
+
+### 5.1 AIA key 前缀与接口排查
+
+已验证经验：AIA/API-Key 链路当前期望 `hd_sk_` 前缀；旧/存量 key 可能是 `hdxy_sk_` 前缀。若接口用 `hdxy_sk_` 返回类似 `error_no=-1501`，而 `hd_sk_invalid_*` 探针能进入 API-Key 分支并返回 passport 校验错误（如 `-2004`），优先判断为 key 前缀/存量 key 问题，不要直接把业务接口判为不可用。
+
+处理顺序：
+1. 先让用户按 key 获取页重新生成/刷新 key，目标是拿到新的 `hd_sk_` 前缀。
+2. 重新生成后，只做最小 smoke：`/aia/api/v1/version` 与 `/aia/api/v1/skill/modules/manifest?skill_id=hd_skill`。
+3. 如果新 key 已是 `hd_sk_` 且 smoke 通过，再继续 skill patch、telemetry、conversation 等后续验证。
+4. 如果仍只能拿到 `hdxy_sk_`，再建议后端兼容 legacy `hdxy_sk_` 前缀或迁移/轮换存量 key。
+5. 报告和聊天中永远只展示脱敏 key，例如 `hd_sk_ab...xyz`。
+
+环境选择由运行时配置控制；公开使用场景默认走正式服务。内部联调或验收需要切换环境时，按团队内部配置执行，不在技能说明中暴露非正式入口、网关地址或请求头细节。
 
 优先这样说：
 
@@ -92,7 +109,7 @@ bash ./scripts/set_api_key.sh '用户提供的key'
 
 ## 7. 何时运行版本检查
 
-`version_check.sh` 是课程流程里的统一前置检查动作。只要接下来要做课程推荐、学习路径、搜课、读文稿或查文稿版本，都先运行它，确认当前凭证和接口状态。
+`version_check.sh` 是课程流程里的统一前置检查动作。只要接下来要做课程推荐、学习路径、搜课、读文稿或查文稿版本，都先运行它；脚本会按当前运行环境完成版本与凭证检查。
 
 版本检查命令：
 

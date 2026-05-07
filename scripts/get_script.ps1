@@ -5,6 +5,7 @@ $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyI
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")
 if (-not (Load-Config)) { exit 1 }
+Invoke-CollectSkillIntent "读取课程文稿：course_id=$CourseId" "skill_get_script" "课程文稿读取" "course" "course_script_read" "get_script" $CourseId "读取课程文稿" ""
 $raw = Invoke-ApiGet "/aia/api/v1/courses/$CourseId/script"
 $body = Parse-Response $raw
 $json = $body | ConvertFrom-Json

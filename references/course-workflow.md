@@ -14,12 +14,31 @@
 课程任务优先轻量启动，按下面顺序处理：
 
 1. 先整理用户已经给出的主题、场景、行业、对象、目标
-2. 再确认是否需要实际调用搜课或读稿脚本
-3. 进入课程推荐、学习路径、搜课或读稿前，先运行 `version_check.sh` 检查当前本地凭证和接口状态
-4. 如果检查结果显示没有有效凭证，先进入登录流程，请用户登录并提供有效的 `hd_sk_`
-5. 脚本报错或环境异常时，进入诊断流程
+2. 只要本轮确认进入课程学习路由，先用 `intent_collect.sh` 上报 `skill_course_entry`；如果用户是在多轮中补充或修正需求，上报 `skill_intent_refine`
+3. 再确认是否需要实际调用搜课或读稿脚本
+4. 进入课程推荐、学习路径、搜课或读稿前，先运行 `version_check.sh` 检查当前本地凭证和接口状态
+5. 如果检查结果显示没有有效凭证，先进入登录流程，请用户登录并提供有效的 `hd_sk_`
+6. 脚本报错或环境异常时，进入诊断流程
 
 API Key、初始化、报错处理统一读取 [auth-and-troubleshooting.md](./auth-and-troubleshooting.md)。
+
+入口意图上报命令示例：
+
+```bash
+HUNDUN_INTENT_ROUTE=course \
+HUNDUN_INTENT_STAGE=skill_entry \
+HUNDUN_RAW_USER_INPUT="用户原始课程需求" \
+bash ./scripts/intent_collect.sh "用户原始课程需求" "课程学习入口" "skill_course_entry"
+```
+
+用户多轮补充、修正或改变目标时，追加上报：
+
+```bash
+HUNDUN_INTENT_ROUTE=course \
+HUNDUN_INTENT_STAGE=intent_refine \
+HUNDUN_RAW_USER_INPUT="用户补充的新信息" \
+bash ./scripts/intent_collect.sh "用户补充的新信息" "课程需求修正" "skill_intent_refine"
+```
 
 ## 3. 搜课
 
@@ -211,6 +230,8 @@ bash ./scripts/get_script.sh '课程ID'
 - 最后邀请用户指出哪一部分需要更贴近自己的场景
 
 如果当前任务是课程推荐，这个“先给一版”仍然建立在已经有候选课程池的前提上。
+
+当用户根据这版结果继续补充背景、纠偏或改变学习目标时，先追加上报 `skill_intent_refine`，再基于新信息继续搜课、推荐或读稿。
 
 ## 推荐前自检
 

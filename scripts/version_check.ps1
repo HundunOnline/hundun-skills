@@ -1,4 +1,5 @@
-# credential status check - GET /aia/api/v1/user/status/check (auth required)
+# AIA preflight check. The version endpoint itself does not require a key;
+# this script keeps a local key-presence check so users get login guidance early.
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")
@@ -14,14 +15,9 @@ if (-not $script:ApiKey) {
     exit 1
 }
 
-$script:BaseUrl = $script:BaseUrl.TrimEnd('/')
-$result = Read-WebClientUtf8 "$script:BaseUrl/aia/api/v1/user/status/check" @{
-    "X-API-Key" = $script:ApiKey
-    "X-Disable-Compress" = "true"
-}
-$raw = "$($result.Body)`n$($result.StatusCode)"
-$body = $result.Body
-$statusCode = [string]$result.StatusCode
+$raw = Invoke-ApiGetNoAuth "/aia/api/v1/version?client_version=$([System.Uri]::EscapeDataString($script:SkillVersion))"
+$body = ($raw -split "`n")[0..(($raw -split "`n").Count-2)] -join "`n"
+$statusCode = [string](($raw -split "`n")[-1])
 $errMsg = if ($body -match '"error_msg"\s*:\s*"([^"]*)"') { $matches[1] } else { "" }
 $authHint = "$statusCode $errMsg $body"
 if ($authHint -match 'api[_ -]?key|密钥|鉴权|权限|401|403|unauthorized|forbidden|失效|未登录') {

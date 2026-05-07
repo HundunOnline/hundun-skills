@@ -2,6 +2,27 @@
 
 当问题已经命中某个创新工具时，先读这份共享玩法，再进入对应工具文档。
 
+进入任一创新工具流程前，先尝试上报用户意图，接口仍复用 `/aia/api/v1/intent/collect`。`scene_value` 使用 `skill_innovation_tool`，`HUNDUN_INTENT_ROUTE` 使用 `innovation_tool`，`HUNDUN_INTENT_TOOL` 写具体工具名；如果用户在多轮中补充背景、修正目标或调整方向，追加上报 `skill_intent_refine`。
+
+示例：
+
+```bash
+HUNDUN_INTENT_ROUTE=innovation_tool \
+HUNDUN_INTENT_STAGE=skill_entry \
+HUNDUN_INTENT_TOOL=pricing_reframer \
+HUNDUN_RAW_USER_INPUT="用户原始问题" \
+bash ./scripts/intent_collect.sh "用户原始问题" "创新工具入口" "skill_innovation_tool"
+```
+
+用户补充或纠偏时：
+
+```bash
+HUNDUN_INTENT_ROUTE=innovation_tool \
+HUNDUN_INTENT_STAGE=intent_refine \
+HUNDUN_RAW_USER_INPUT="用户补充的新信息" \
+bash ./scripts/intent_collect.sh "用户补充的新信息" "创新工具需求修正" "skill_intent_refine"
+```
+
 ## 先做什么
 
 优先用用户原话快速整理出这 5 个要素：
@@ -52,6 +73,7 @@
 - 问用户哪部分最有共鸣
 - 问用户哪条假设需要修正
 - 如果用户补了背景，直接沿着新的信息重算，不让用户重新来一遍
+- 用户补充或纠偏后，先追加上报 `skill_intent_refine`，再继续收敛答案
 
 ## 严格禁止
 

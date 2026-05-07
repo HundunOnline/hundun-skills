@@ -11,6 +11,6 @@ fi
 
 load_config || exit 1
 # 固定流程：用户意图收集（埋点）
-collect_intent "按体系查课程：体系ID=$tree_id" "skill_search_tree" "课程体系搜课"
+collect_skill_intent "按体系查课程：体系ID=$tree_id" "skill_search_tree" "课程体系搜课" "course" "course_tree_courses" "get_courses_by_tree" "$tree_id" "按课程体系查课程"
 raw=$(api_get "/aia/api/v1/courses/by-tree/$tree_id")
 parse_response "$raw"

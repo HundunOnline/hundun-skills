@@ -11,6 +11,7 @@ if [[ -z "$course_id" ]]; then
 fi
 
 load_config || exit 1
+collect_skill_intent "读取课程文稿：course_id=$course_id" "skill_get_script" "课程文稿读取" "course" "course_script_read" "get_script" "$course_id" "读取课程文稿"
 raw=$(api_get "/aia/api/v1/courses/$course_id/script")
 body=$(parse_response "$raw") || exit 1
 

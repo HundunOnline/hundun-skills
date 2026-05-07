@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# 凭证状态检查 - GET /aia/api/v1/user/status/check（需鉴权）
+# AIA preflight check. The version endpoint itself does not require a key;
+# this script keeps a local key-presence check so users get login guidance early.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
 
@@ -14,10 +15,7 @@ if [[ -z "$api_key" ]]; then
     exit 1
 fi
 
-raw=$(curl -sS -w "\n%{http_code}" \
-    -H "X-API-Key: $api_key" \
-    -H "X-Disable-Compress: true" \
-    "${base_url}/aia/api/v1/user/status/check")
+raw=$(api_get_no_auth "/aia/api/v1/version?client_version=$(urlencode "$HUNDUN_SKILL_VERSION")")
 output=$(parse_response "$raw" 2>&1)
 status=$?
 

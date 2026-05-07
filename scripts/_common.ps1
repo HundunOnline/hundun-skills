@@ -1,5 +1,7 @@
 # hd_skill common logic (PowerShell) - equivalent to _common.sh
 $script:CommonScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$script:SkillRoot = Split-Path -Parent $script:CommonScriptDir
+$script:SkillVersion = if ($env:HUNDUN_SKILL_VERSION) { $env:HUNDUN_SKILL_VERSION } else { "1.0.2" }
 
 # Force UTF-8 output to avoid garbled Chinese on Windows
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -7,33 +9,57 @@ if ([Console]::OutputEncoding -ne [System.Text.Encoding]::UTF8) {
     try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 }
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$script:ConfigPath = if ($env:HDXY_CONFIG) { $env:HDXY_CONFIG } else { Join-Path $env:USERPROFILE ".hdxy_config" }
+$script:ConfigPath = if ($env:HDXY_CONFIG) { $env:HDXY_CONFIG } else { Join-Path $script:SkillRoot ".clawhub/.hdxy_config" }
 $script:DefaultBaseUrl = "https://hddrapi.hundun.cn"
-$script:BaseUrl = if ($env:HDXY_API_BASE_URL) { $env:HDXY_API_BASE_URL } else { $script:DefaultBaseUrl }
-$script:ApiKey = ""
+$script:DefaultTestBaseUrl = ""
+$script:DefaultTestHost = ""
+$script:BaseUrl = if ($env:HUNDUN_API_BASE_URL) { $env:HUNDUN_API_BASE_URL } elseif ($env:HDXY_API_BASE_URL) { $env:HDXY_API_BASE_URL } else { $script:DefaultBaseUrl }
+$script:ApiKey = if ($env:HUNDUN_API_KEY) { $env:HUNDUN_API_KEY } elseif ($env:HDXY_API_KEY) { $env:HDXY_API_KEY } else { "" }
+$script:ApiHostHeader = ""
+$script:ApiOrigin = ""
+$script:ApiIsTest = $false
+$script:ApiNeedHostHeader = $false
 
 function Load-Config {
-    if (-not (Test-Path $script:ConfigPath)) {
-        $dir = Split-Path $script:ConfigPath
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-        @"
-# hd_skill config (auto-generated)
-# Replace api_key from https://tools.hundun.cn/h5Bin/aia/#/keys
-
-api_key=
-base_url=$script:DefaultBaseUrl
-"@ | Set-Content -Path $script:ConfigPath -Encoding UTF8
-        Write-Host "Config created: $script:ConfigPath" -ForegroundColor Yellow
-        Write-Host "Send api_key (hd_sk_...) to AI to configure. Get key: https://tools.hundun.cn/h5Bin/aia/#/keys" -ForegroundColor Yellow
-        return $false
+    if (Test-Path $script:ConfigPath) {
+        $lines = Get-Content $script:ConfigPath -ErrorAction SilentlyContinue
+        foreach ($line in $lines) {
+            if (-not $script:ApiKey -and $line -match '^api_key=(.*)$') { $script:ApiKey = $matches[1].Trim() }
+            if ($line -match '^base_url=(.*)$') { $script:BaseUrl = $matches[1].Trim() }
+            if (-not $env:HUNDUN_ENV -and $line -match '^env=(.*)$') { $env:HUNDUN_ENV = $matches[1].Trim() }
+        }
     }
-    $lines = Get-Content $script:ConfigPath -ErrorAction SilentlyContinue
-    foreach ($line in $lines) {
-        if ($line -match '^api_key=(.*)$') { $script:ApiKey = $matches[1].Trim() }
-        if ($line -match '^base_url=(.*)$') { $script:BaseUrl = $matches[1].Trim() }
+    if ($env:HUNDUN_API_KEY) { $script:ApiKey = $env:HUNDUN_API_KEY }
+    elseif ($env:HDXY_API_KEY) { $script:ApiKey = $env:HDXY_API_KEY }
+    if ($env:HUNDUN_ENV -eq "test") {
+        $script:ApiIsTest = $true
+        if ($env:HUNDUN_TEST_BASE_URL) { $script:BaseUrl = $env:HUNDUN_TEST_BASE_URL }
+        elseif ($env:HDXY_TEST_BASE_URL) { $script:BaseUrl = $env:HDXY_TEST_BASE_URL }
+        else { $script:BaseUrl = $script:DefaultTestBaseUrl }
+        if (-not $script:BaseUrl) {
+            Write-Host "Error: test environment requires HUNDUN_TEST_BASE_URL or HDXY_TEST_BASE_URL." -ForegroundColor Red
+            return $false
+        }
+    } elseif ($env:HUNDUN_API_BASE_URL) {
+        $script:BaseUrl = $env:HUNDUN_API_BASE_URL
+    } elseif ($env:HDXY_API_BASE_URL) {
+        $script:BaseUrl = $env:HDXY_API_BASE_URL
     }
-    if ($env:HDXY_API_BASE_URL) { $script:BaseUrl = $env:HDXY_API_BASE_URL }
     $script:BaseUrl = $script:BaseUrl.TrimEnd('/')
+    try {
+        $uri = [System.Uri]$script:BaseUrl
+        $script:ApiOrigin = $uri.GetLeftPart([System.UriPartial]::Authority)
+        if ($env:HUNDUN_TEST_HOST) { $script:ApiHostHeader = $env:HUNDUN_TEST_HOST }
+        elseif ($env:HDXY_TEST_HOST) { $script:ApiHostHeader = $env:HDXY_TEST_HOST }
+        else { $script:ApiHostHeader = $uri.Authority }
+        if ($script:ApiIsTest -and $script:DefaultTestHost -and ($uri.Host -eq "127.0.0.1" -or $uri.Host -eq "localhost")) {
+            $script:ApiHostHeader = $script:DefaultTestHost
+            $script:ApiOrigin = "https://$script:ApiHostHeader"
+        }
+        $script:ApiNeedHostHeader = ($script:ApiIsTest -and $script:ApiHostHeader -and $script:ApiHostHeader -ne $uri.Authority)
+    } catch {
+        $script:ApiOrigin = $script:DefaultBaseUrl
+    }
     return $true
 }
 
@@ -72,9 +98,21 @@ function Read-WebClientUtf8([string]$url, [hashtable]$extraHeaders) {
     return $out
 }
 
+function Get-CommonHeaders {
+    $headers = @{}
+    if ($script:ApiIsTest) {
+        if ($script:ApiNeedHostHeader) { $headers["Host"] = $script:ApiHostHeader }
+        if ($script:ApiOrigin) {
+            $headers["Origin"] = $script:ApiOrigin
+            $headers["Referer"] = "$script:ApiOrigin/"
+        }
+    }
+    return $headers
+}
+
 function Invoke-ApiGetNoAuth([string]$path) {
     $url = "$script:BaseUrl$path"
-    $result = Read-WebClientUtf8 $url @{}
+    $result = Read-WebClientUtf8 $url (Get-CommonHeaders)
     return "$($result.Body)`n$($result.StatusCode)"
 }
 
@@ -84,7 +122,9 @@ function Invoke-ApiGet([string]$path) {
         return $null
     }
     $url = "$script:BaseUrl$path"
-    $result = Read-WebClientUtf8 $url @{ "X-API-Key" = $script:ApiKey }
+    $headers = Get-CommonHeaders
+    $headers["X-API-Key"] = $script:ApiKey
+    $result = Read-WebClientUtf8 $url $headers
     return "$($result.Body)`n$($result.StatusCode)"
 }
 
@@ -99,11 +139,14 @@ function Invoke-ApiPost([string]$path, [string]$body) {
         return $null
     }
     $url = "$script:BaseUrl$path"
-    $origin = ([System.Uri]$script:BaseUrl).GetLeftPart([System.UriPartial]::Authority)
     $wc = New-Object System.Net.WebClient
     $wc.Encoding = [System.Text.Encoding]::UTF8
+    $headers = Get-CommonHeaders
+    if (-not $script:ApiIsTest -and $script:ApiOrigin) { $headers["Origin"] = $script:ApiOrigin }
+    foreach ($h in $headers.GetEnumerator()) {
+        $wc.Headers.Add($h.Key, $h.Value)
+    }
     $wc.Headers.Add("X-API-Key", $script:ApiKey)
-    $wc.Headers.Add("Origin", $origin)
     $wc.Headers.Add("Content-Type", "application/json; charset=utf-8")
     $utf8 = [System.Text.Encoding]::UTF8
     try {
@@ -125,14 +168,65 @@ function Invoke-ApiPost([string]$path, [string]$body) {
     }
 }
 
+function New-IntentExtraJson(
+    [string]$Route = "",
+    [string]$Stage = "",
+    [string]$Tool = "",
+    [string]$RawUserInput = "",
+    [string]$NormalizedIntent = "",
+    [string]$PreviousRequestId = ""
+) {
+    $payload = [ordered]@{
+        source = "hundun_skill"
+        client = "powershell"
+    }
+    $sessionId = if ($env:HUNDUN_SESSION_ID) { $env:HUNDUN_SESSION_ID } else { $env:AIA_SESSION_ID }
+    $requestId = if ($env:HUNDUN_REQUEST_ID) { $env:HUNDUN_REQUEST_ID } else { $env:AIA_REQUEST_ID }
+    $turnId = if ($env:HUNDUN_TURN_ID) { $env:HUNDUN_TURN_ID } else { $env:AIA_TURN_ID }
+    if ($sessionId) { $payload.session_id = $sessionId }
+    if ($requestId) { $payload.request_id = $requestId }
+    if ($turnId) { $payload.turn_id = $turnId }
+    if (-not $Route -and $env:HUNDUN_INTENT_ROUTE) { $Route = $env:HUNDUN_INTENT_ROUTE }
+    if (-not $Stage -and $env:HUNDUN_INTENT_STAGE) { $Stage = $env:HUNDUN_INTENT_STAGE }
+    if (-not $Tool -and $env:HUNDUN_INTENT_TOOL) { $Tool = $env:HUNDUN_INTENT_TOOL }
+    if (-not $RawUserInput -and $env:HUNDUN_RAW_USER_INPUT) { $RawUserInput = $env:HUNDUN_RAW_USER_INPUT }
+    if (-not $NormalizedIntent -and $env:HUNDUN_NORMALIZED_INTENT) { $NormalizedIntent = $env:HUNDUN_NORMALIZED_INTENT }
+    if (-not $PreviousRequestId -and $env:HUNDUN_PREVIOUS_REQUEST_ID) { $PreviousRequestId = $env:HUNDUN_PREVIOUS_REQUEST_ID }
+    if ($Route) { $payload.route = $Route }
+    if ($Stage) { $payload.stage = $Stage }
+    if ($Tool) { $payload.tool = $Tool }
+    if ($RawUserInput) { $payload.raw_user_input = $RawUserInput }
+    if ($NormalizedIntent) { $payload.normalized_intent = $NormalizedIntent }
+    if ($PreviousRequestId) { $payload.previous_request_id = $PreviousRequestId }
+    return ($payload | ConvertTo-Json -Compress -Depth 5)
+}
+
 function Invoke-CollectIntent([string]$intentDesc, [string]$sceneValue, [string]$sceneDesc, [string]$extra) {
     if (-not $script:ApiKey) { return }
     try {
+        if (-not $extra) { $extra = New-IntentExtraJson }
         $body = @{ intent_desc = $intentDesc; scene_value = $sceneValue; scene_desc = $sceneDesc; extra_related_content = $extra } | ConvertTo-Json
         Invoke-ApiPost "/aia/api/v1/intent/collect" $body | Out-Null
     } catch {
         # intent collect must not block search and other main flows
     }
+}
+
+function Invoke-CollectSkillIntent(
+    [string]$intentDesc,
+    [string]$sceneValue,
+    [string]$sceneDesc,
+    [string]$route,
+    [string]$stage,
+    [string]$tool,
+    [string]$rawUserInput = "",
+    [string]$normalizedIntent = "",
+    [string]$previousRequestId = ""
+) {
+    if (-not $rawUserInput) { $rawUserInput = $intentDesc }
+    if (-not $normalizedIntent) { $normalizedIntent = $intentDesc }
+    $extra = New-IntentExtraJson $route $stage $tool $rawUserInput $normalizedIntent $previousRequestId
+    Invoke-CollectIntent $intentDesc $sceneValue $sceneDesc $extra
 }
 
 function Parse-Response([string]$raw) {

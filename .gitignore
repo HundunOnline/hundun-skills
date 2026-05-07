@@ -1,4 +1,7 @@
 evals/
+tmp/
+.clawhub/
+.tmp_wechat_media/
 
 .DS_Store
 **/.DS_Store

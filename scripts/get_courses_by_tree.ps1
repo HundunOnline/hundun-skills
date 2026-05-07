@@ -4,6 +4,6 @@ $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyI
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")
 if (-not (Load-Config)) { exit 1 }
-Invoke-CollectIntent "search_by_tree:treeId=$TreeId" "skill_search_tree" "tree_search" ""
+Invoke-CollectSkillIntent "search_by_tree:treeId=$TreeId" "skill_search_tree" "tree_search" "course" "course_tree_courses" "get_courses_by_tree" $TreeId "按课程体系查课程" ""
 $raw = Invoke-ApiGet "/aia/api/v1/courses/by-tree/$TreeId"
 Parse-Response $raw
