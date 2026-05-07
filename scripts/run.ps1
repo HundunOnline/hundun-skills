@@ -1,4 +1,4 @@
-# hd_skill Windows entry: run .ps1 first, fallback to .sh + Git Bash
+﻿# hd_skill Windows entry: run .ps1 first, fallback to .sh + Git Bash
 # Usage: .\scripts\run.ps1 <script_name> [args...]
 # Example: .\scripts\run.ps1 search_courses "keyword"
 
@@ -71,7 +71,13 @@ if ($SkillDir -match '^([A-Za-z]):') {
 } else {
     $skillDirUnix = $SkillDir -replace '\\', '/'
 }
-function Escape-BashArg($a) { return "'" + ($a -replace "'", "'\''") + "'" }
+function Escape-BashArg([string]$a) {
+    if ($null -eq $a) { return "''" }
+    $quote = [string][char]39
+    $backslash = [string][char]92
+    $escapedQuote = $quote + $backslash + $quote + $quote
+    return $quote + ($a -replace "'", $escapedQuote) + $quote
+}
 $argStr = if ($ScriptArgs) { ($ScriptArgs | ForEach-Object { Escape-BashArg $_ }) -join " " } else { "" }
 $cmd = "cd '$skillDirUnix' && ./scripts/$ScriptName.sh $argStr"
 $bashArgs = @('-c', $cmd)

@@ -1,4 +1,4 @@
-# hd_skill common logic (PowerShell) - equivalent to _common.sh
+﻿# hd_skill common logic (PowerShell) - equivalent to _common.sh
 $script:CommonScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 $script:SkillRoot = Split-Path -Parent $script:CommonScriptDir
 $script:SkillVersion = if ($env:HUNDUN_SKILL_VERSION) { $env:HUNDUN_SKILL_VERSION } else { "1.0.2" }

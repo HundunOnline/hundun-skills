@@ -1,4 +1,4 @@
-# course trees - GET /aia/api/v1/courses/trees
+﻿# course trees - GET /aia/api/v1/courses/trees
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")

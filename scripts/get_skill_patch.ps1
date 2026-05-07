@@ -1,4 +1,4 @@
-# GET /aia/api/v1/skill/patch?skill_id=&module_key=[&version=]
+﻿# GET /aia/api/v1/skill/patch?skill_id=&module_key=[&version=]
 # Omit version to fetch current active patch (patch_status=current).
 param(
     [Parameter(Position = 0)]

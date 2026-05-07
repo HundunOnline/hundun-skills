@@ -1,4 +1,4 @@
-# GET /aia/api/v1/skill/modules/:module_key (auth)
+﻿# GET /aia/api/v1/skill/modules/:module_key (auth)
 param(
     [Parameter(Mandatory=$true, Position=0)][string]$ModuleKey,
     [Parameter(Position=1)][string]$SkillId = "hd_skill"

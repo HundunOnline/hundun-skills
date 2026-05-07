@@ -1,4 +1,4 @@
-# get courses by tree - GET /aia/api/v1/courses/by-tree/{treeId}
+﻿# get courses by tree - GET /aia/api/v1/courses/by-tree/{treeId}
 param([Parameter(Mandatory=$true, Position=0)][string]$TreeId)
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }

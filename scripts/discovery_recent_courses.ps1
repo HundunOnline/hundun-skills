@@ -1,4 +1,4 @@
-# GET /aia/api/v1/discovery/recent-courses (auth required)
+﻿# GET /aia/api/v1/discovery/recent-courses (auth required)
 param([Parameter(Position=0)][string]$Limit = "")
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")

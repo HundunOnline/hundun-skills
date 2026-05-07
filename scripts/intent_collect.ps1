@@ -1,4 +1,4 @@
-# intent collect - POST /aia/api/v1/intent/collect
+﻿# intent collect - POST /aia/api/v1/intent/collect
 # If ExtraRelatedContent is empty, HUNDUN_SESSION_ID/HUNDUN_TURN_ID/HUNDUN_INTENT_ROUTE/HUNDUN_INTENT_STAGE env vars are packed into extra_related_content.
 param(
     [Parameter(Mandatory=$true, Position=0)][string]$IntentDesc,

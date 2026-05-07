@@ -1,4 +1,4 @@
-# AIA preflight check. The version endpoint itself does not require a key;
+﻿# AIA preflight check. The version endpoint itself does not require a key;
 # this script keeps a local key-presence check so users get login guidance early.
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }

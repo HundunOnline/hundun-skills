@@ -1,4 +1,4 @@
-# get course script - GET /aia/api/v1/courses/{course_id}/script
+﻿# get course script - GET /aia/api/v1/courses/{course_id}/script
 # Returns script_url (AES encrypted), decrypts and downloads script content
 param([Parameter(Mandatory=$true, Position=0)][string]$CourseId)
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }

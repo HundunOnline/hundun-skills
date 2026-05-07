@@ -1,4 +1,4 @@
-# search courses by keyword - GET /aia/api/v1/courses/search?keyword=xxx
+﻿# search courses by keyword - GET /aia/api/v1/courses/search?keyword=xxx
 param([Parameter(Mandatory=$true, Position=0)][string]$Keyword)
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }

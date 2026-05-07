@@ -1,4 +1,4 @@
-# get script version - GET /aia/api/v1/courses/{course_id}/script/version
+﻿# get script version - GET /aia/api/v1/courses/{course_id}/script/version
 param([Parameter(Mandatory=$true, Position=0)][string]$CourseId)
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }

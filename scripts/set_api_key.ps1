@@ -1,4 +1,4 @@
-# write api_key to workspace config
+﻿# write api_key to workspace config
 param([Parameter(Mandatory=$true, Position=0)][string]$ApiKey)
 if ($ApiKey -notmatch '^hd_sk_') {
     Write-Host "Usage: api_key must start with hd_sk_" -ForegroundColor Red

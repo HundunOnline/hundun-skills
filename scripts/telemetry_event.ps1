@@ -1,4 +1,4 @@
-# POST /aia/api/v1/telemetry/events (auth)
+﻿# POST /aia/api/v1/telemetry/events (auth)
 param(
     [Parameter(Mandatory=$true, Position=0)][string]$EventName,
     [Parameter(Mandatory=$true, Position=1)][string]$RequestId,
