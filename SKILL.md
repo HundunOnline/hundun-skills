@@ -49,6 +49,8 @@ metadata:
 
 只要 Agent 判定本轮要实际调用混沌能力，就先尝试上报用户意图；无论后续走课程学习路由，还是走创新工具路由，都适用。意图上报复用现有 `/aia/api/v1/intent/collect` 接口，失败不阻塞主流程；如果当前还没有 API Key，就先继续完成当前任务或登录流程，拿到 key 后用最新完整需求补报一条。
 
+用户意图只允许通过 `scripts/intent_collect.sh` / `scripts/intent_collect.ps1` 上报，服务端会写入 `user_intent_collect`。不要把用户原始需求、补充需求或意图摘要写入 `hd_ai_center.user_ai_qa`。
+
 首次进入 skill 时，按路由选择下面的场景值：
 
 - 课程学习、搜课、读课、课程推荐：`skill_course_entry`
@@ -104,7 +106,7 @@ bash ./scripts/intent_collect.sh "用户补充的新信息" "多轮需求修正"
 
 1. 先看用户是否明确提及混沌课程、搜课、读课、课程学习、课程体系、课程文稿；命中则直接走课程学习路由
 2. 如果没有明确提及课程，再按场景描述匹配最贴近的创新工具；命中则走创新工具路由
-3. 如果用户要验证或同步 AIA Skill 脚本能力，优先使用 `scripts/discovery_*.sh`、`scripts/get_skill_module*.sh`、`scripts/conversation_record.sh`、`scripts/telemetry_event.sh`
+3. 如果用户要验证或同步 AIA Skill 脚本能力，优先使用 `scripts/discovery_*.sh`、`scripts/get_skill_module*.sh`、`scripts/intent_collect.sh`、`scripts/telemetry_event.sh`
 
 默认只选一条主路由执行，让当前回答围绕一个主任务展开。
 
@@ -121,12 +123,12 @@ bash ./scripts/intent_collect.sh "用户补充的新信息" "多轮需求修正"
 
 ### 3. AIA Skill 接口路由
 
-当任务涉及 Skill 模块同步、patch 拉取、对话记录或 telemetry 上报时，使用 AIA Skill 接口脚本：
+当任务涉及 Skill 模块同步、patch 拉取、意图或 telemetry 上报时，使用 AIA Skill 接口脚本：
 
 - 发现页/推荐内容：使用 `scripts/discovery_recommendations.sh`、`scripts/discovery_recent_courses.sh`
 - Skill 模块清单和详情：使用 `scripts/get_skill_modules.sh`、`scripts/get_skill_module.sh`
 - 服务端 patch：使用 `scripts/get_skill_patch.sh`
-- 对话记录回传：使用 `scripts/conversation_record.sh`
+- 用户意图上报：使用 `scripts/intent_collect.sh`；这是用户需求、补充需求、修正需求的唯一上报入口
 - telemetry 事件上报：使用 `scripts/telemetry_event.sh`
 
 环境选择由运行时配置控制；公开使用场景默认走正式服务。内部联调或验收需要切换环境时，按团队内部配置执行，不在技能说明中暴露非正式入口、网关地址或请求头细节。
@@ -168,7 +170,6 @@ bash ./scripts/intent_collect.sh "用户补充的新信息" "多轮需求修正"
 - `scripts/get_script_version.sh` / `scripts/get_script_version.ps1`：获取文稿版本
 - `scripts/get_script.sh` / `scripts/get_script.ps1`：获取课程文稿正文
 - `scripts/intent_collect.sh` / `scripts/intent_collect.ps1`：用户意图收集
-- `scripts/conversation_record.sh` / `scripts/conversation_record.ps1`：写入 AIA conversation record
 - `scripts/telemetry_event.sh` / `scripts/telemetry_event.ps1`：上报 AIA telemetry events
 - `scripts/_common.sh` / `scripts/_common.ps1`：脚本公共能力
 - `scripts/_decompress.py`：文稿解压支持
