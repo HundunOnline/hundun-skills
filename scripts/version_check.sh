@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# AIA preflight check. The version endpoint itself does not require a key;
-# this script keeps a local key-presence check so users get login guidance early.
+# AIA version preflight. The version endpoint itself does not require a key.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
 
@@ -44,11 +43,6 @@ print("\n".join([u.get("message",""),u.get("current",""),u.get("latest",""),u.ge
 }
 
 load_config || exit 1
-
-if [[ -z "$api_key" ]]; then
-    print_login_guidance
-    exit 1
-fi
 
 raw=$(api_get_no_auth "/aia/api/v1/version?client_version=$(urlencode "$HUNDUN_SKILL_VERSION")")
 output=$(parse_response "$raw" 2>&1)

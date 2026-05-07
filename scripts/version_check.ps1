@@ -1,5 +1,5 @@
 ﻿# AIA preflight check. The version endpoint itself does not require a key;
-# this script keeps a local key-presence check so users get login guidance early.
+# It can run before login so upgrade guidance is available even without a key.
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = Split-Path -Parent $PSCommandPath }
 . (Join-Path $scriptDir "_common.ps1")
@@ -23,11 +23,6 @@ function Write-UpgradeNotice([string]$body) {
 }
 
 if (-not (Load-Config)) { exit 1 }
-
-if (-not $script:ApiKey) {
-    Write-LoginGuidance
-    exit 1
-}
 
 $raw = Invoke-ApiGetNoAuth "/aia/api/v1/version?client_version=$([System.Uri]::EscapeDataString($script:SkillVersion))"
 $body = ($raw -split "`n")[0..(($raw -split "`n").Count-2)] -join "`n"
